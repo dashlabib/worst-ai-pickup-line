@@ -21,18 +21,29 @@ LINE = (
 MAX_CHARS = 140
 
 
-def main() -> int:
-    line = LINE.strip()
-    if not line:
-        print("error: line is empty", file=sys.stderr)
-        return 1
-    if len(line) > MAX_CHARS:
-        print(
-            "error: line is %d characters, over the %d cap" % (len(line), MAX_CHARS),
-            file=sys.stderr,
+def validate_line(line):
+    """Check one candidate line against the competition gate.
+
+    Returns the stripped line, or raises ValueError naming the failure.
+    """
+    stripped = line.strip()
+    if not stripped:
+        raise ValueError("line is empty or only whitespace")
+    if len(stripped) > MAX_CHARS:
+        raise ValueError(
+            "line is %d characters, over the %d cap" % (len(stripped), MAX_CHARS)
         )
+    stripped.encode("utf-8")  # the gate requires UTF-8 text
+    return stripped
+
+
+def main() -> int:
+    try:
+        line = validate_line(LINE)
+    except ValueError as exc:
+        print("error: %s" % exc, file=sys.stderr)
         return 1
-    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output") or "/output"
     os.makedirs(out_dir, exist_ok=True)
     path = os.path.join(out_dir, "entry.txt")
     with open(path, "w", encoding="utf-8", newline="\n") as handle:
